@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -38,7 +36,7 @@ void my_qsort(double *d, int *idx, int len, int k)
 		tempd = quick_select(d, idx, k + 1, i);
 }
 
-knnresult kNN(double *X, double  *Y, int n, int m, int d, int k) 
+knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 {
 	knnresult result;
 	result.nidx = (int*)malloc(m * k * sizeof(int));
@@ -54,7 +52,7 @@ knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 			*(distxy + c) = 0.0;
 			for (int dim = 0; dim < d; dim++)
 				*(distxy + c) += pow(*(Y + q * d + dim) - *(X + c * d + dim), 2);
-			*(distxy + c) = sqrt(*(distxy + c));			
+			*(distxy + c) = sqrt(*(distxy + c));
 		}
 		my_qsort(distxy, idx, n, k);
 		for (int n = 0; n < k; n++) {	// add to struct the k neighbors
