@@ -33,10 +33,10 @@ CFLAGS = -fcilkplus -fopenmp -lpthread -Wall
 INCLUDES = -I $(INCDIR)
 
 # define the source file for the library
-SRC = vptree
+SRC = knnring
 
 # define the different possible executables
-TYPES = sequential openmp cilk pthreads
+TYPES = sequential #openmp cilk pthreads
 
 # define the executable file  name
 MAIN = main

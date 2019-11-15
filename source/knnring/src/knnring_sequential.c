@@ -31,9 +31,9 @@ double quick_select(double *d, int *idx, int len, int k)
 
 void my_qsort(double *d, int *idx, int len, int k)
 {
-	double tempd = quick_select(d, idx, len, k);
+	quick_select(d, idx, len, k);
 	for (int i = 0; i < k + 1; i++)
-		tempd = quick_select(d, idx, k + 1, i);
+		quick_select(d, idx, k + 1, i);
 }
 
 knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
