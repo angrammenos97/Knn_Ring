@@ -13,10 +13,13 @@ extract:
 	tar -xvzf code.tar.gz
 	rm -f ./$(SRC)/lib/*
 
+tar :
+	tar -czvf code.tar.gz ./$(SRC)
+
 test_sequential: extract
 	cd $(SRC); make lib; cd ..
 	cd $(SRC); cp lib/*.a inc/$(SRC).h ../; cd ..
-	$(CC) tester.c $(SRC)_sequential.a -o $@ -lm
+	$(CC) tester.c $(SRC)_sequential.a -o $@ -lm -lopenblas
 	./test_sequential
 
 clean:

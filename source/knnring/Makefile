@@ -27,7 +27,8 @@ LIBDIR = lib
 MATDIR = matlab
 
 # define compile-time flags
-CFLAGS = -fcilkplus -fopenmp -lpthread -Wall
+CFLAGS = -Wall
+LDFLAGS = -lm -lopenbplas
 
 # define any directories containing header files
 INCLUDES = -I $(INCDIR)
@@ -36,7 +37,7 @@ INCLUDES = -I $(INCDIR)
 SRC = knnring
 
 # define the different possible executables
-TYPES = sequential #openmp cilk pthreads
+TYPES = sequential
 
 # define the executable file  name
 MAIN = main
@@ -69,4 +70,4 @@ $(SRCDIR)/$(SRC)_%.o: $(SRCDIR)/$(SRC)_%.c
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $< -lm
 
 clean:
-	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(MATDIR)/data.m $(addprefix $(MAIN)_, $(TYPES)) *~
+	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(MATDIR)/data.m $(addprefix $(MAIN)_, $(TYPES)) *~ data.m
