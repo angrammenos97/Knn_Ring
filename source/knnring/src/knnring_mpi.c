@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "knnring.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +57,7 @@ void my_qsort(double *d, int *idx, int len, int k)
 {
 	quick_select(d, idx, len, k);			// put first the k shortest
 	for (int i = 0; i < k + 1; i++)			// and after short them
-		quick_select(d, idx, k + 1, i);		
+		quick_select(d, idx, k + 1, i);
 }
 
 knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
@@ -86,11 +84,5 @@ knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 
 knnresult distrAllkNN(double *X, int n, int d, int k)
 {
-	/*knnresult result;
-	result.nidx = (int*)malloc(n * k * sizeof(int));
-	result.ndist = (double*)malloc(n * k * sizeof(double));
-	result.m = n;
-	result.k = k;
-	return result;*/
 	return kNN(X, X, n, n, d, k);
 }

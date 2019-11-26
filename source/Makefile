@@ -3,11 +3,13 @@ SHELL := /bin/bash
 
 # define the C/C++ compiler to use,default here is clang
 CC = gcc-7
+MPICC = mpicc
+MPIRUN = mpirun -np 4
 
 # define the source file for the library
 SRC = knnring
 
-all: test_sequential
+all: test_sequential test_mpi
 
 extract:
 	tar -xvzf code.tar.gz
@@ -21,6 +23,12 @@ test_sequential: extract
 	cd $(SRC); cp lib/*.a inc/$(SRC).h ../; cd ..
 	$(CC) tester.c $(SRC)_sequential.a -o $@ -lm -lopenblas
 	./test_sequential
+
+test_mpi: extract
+	cd $(SRC); make lib; cd ..
+	cd $(SRC); cp lib/*.a inc/$(SRC).h ../; cd ..
+	$(MPICC) tester_mpi.c $(SRC)_mpi.a -o $@ -lm -lopenblas
+	$(MPIRUN) ./test_mpi
 
 clean:
 	cd $(SRC); make clean; cd ..

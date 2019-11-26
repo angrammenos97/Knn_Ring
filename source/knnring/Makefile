@@ -37,7 +37,7 @@ INCLUDES = -I $(INCDIR)
 SRC = knnring
 
 # define the different possible executables
-TYPES = sequential
+TYPES = sequential mpi
 
 # define the executable file  name
 MAIN = main
