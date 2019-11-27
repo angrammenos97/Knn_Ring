@@ -19,6 +19,7 @@ SHELL := /bin/bash
 
 # define the C/C++ compiler to use,default here is clang
 CC = gcc-7
+MPICC = mpicc
 
 # setup paths
 SRCDIR = src
@@ -28,7 +29,7 @@ MATDIR = matlab
 
 # define compile-time flags
 CFLAGS = -Wall
-LDFLAGS = -lm -lopenbplas
+LDFLAGS = -lm -lopenblas
 
 # define any directories containing header files
 INCLUDES = -I $(INCDIR)
@@ -54,8 +55,11 @@ all: $(addprefix $(MAIN)_, $(TYPES))
 
 lib: $(addprefix $(LIBDIR)/, $(addsuffix .a, $(addprefix $(SRC)_, $(TYPES))))
 
-$(MAIN)_%: $(SRCDIR)/$(MAIN).c $(LIBDIR)/$(SRC)_%.a
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ -lm
+$(MAIN)_sequential: $(SRCDIR)/$(MAIN).c $(LIBDIR)/$(SRC)_sequential.a
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+$(MAIN)_mpi: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi.a
+		$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
@@ -66,8 +70,11 @@ $(LIBDIR)/$(SRC)_%.a: $(SRCDIR)/$(SRC)_%.o
 	ar rcs $@ $<
 
 # (see the gnu make manual section about automatic variables)
-$(SRCDIR)/$(SRC)_%.o: $(SRCDIR)/$(SRC)_%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $< -lm
+$(SRCDIR)/$(SRC)_sequential.o: $(SRCDIR)/$(SRC)_sequential.c
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
+
+$(SRCDIR)/$(SRC)_mpi.o: $(SRCDIR)/$(SRC)_mpi.c
+		$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
 
 clean:
 	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(MATDIR)/data.m $(addprefix $(MAIN)_, $(TYPES)) *~ data.m

@@ -28,14 +28,14 @@ int main(int argc, char *argv[])
 	int d = 37;                      // dimensions
 	int k = 13;                     // # neighbors
 
-	double * corpus;              // will hold data
+	double * corpus = NULL;              // will hold data
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID
 	MPI_Comm_size(MPI_COMM_WORLD, &p); // # tasks
 
 
 	// initialize (as if it could hold, for testing)
-	double * corpusAll;
+	double * corpusAll = NULL;
 
 	if (id == 0) {                // ..... MASTER
 

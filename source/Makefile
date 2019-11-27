@@ -6,6 +6,10 @@ CC = gcc-7
 MPICC = mpicc
 MPIRUN = mpirun -np 4
 
+# define compile-time flags
+CFLAGS = -Wall
+LDFLAGS = -lm -lopenblas
+
 # define the source file for the library
 SRC = knnring
 
@@ -21,13 +25,13 @@ tar :
 test_sequential: extract
 	cd $(SRC); make lib; cd ..
 	cd $(SRC); cp lib/*.a inc/$(SRC).h ../; cd ..
-	$(CC) tester.c $(SRC)_sequential.a -o $@ -lm -lopenblas
+	$(CC) $(CFLAS) tester.c $(SRC)_sequential.a -o $@ $(LDFLAGS)
 	./test_sequential
 
 test_mpi: extract
 	cd $(SRC); make lib; cd ..
 	cd $(SRC); cp lib/*.a inc/$(SRC).h ../; cd ..
-	$(MPICC) tester_mpi.c $(SRC)_mpi.a -o $@ -lm -lopenblas
+	$(MPICC) $(CFLAS) tester_mpi.c $(SRC)_mpi.a -o $@ $(LDFLAGS)
 	$(MPIRUN) ./test_mpi
 
 clean:
