@@ -73,6 +73,21 @@ void add_idx_offset(int offset, int *idx, int n, int k)
 			*(idx + i * k + j) += offset;
 }
 
+void get_min_max(double *d, int n, int k, double *min_value, double *max_value)
+{
+	const int minmaxdim = 2;
+	double *min_max_array = (double*)malloc(minmaxdim * n * sizeof(double));
+	for (int i = 0; i < n; i++) {
+		*(min_max_array + 0 * minmaxdim + i) = *(d + i * k + 1);		// min value of i query
+		*(min_max_array + 1 * minmaxdim + i) = *(d + i * k + (k - 1));	// max value of i query
+	}
+	int *tmpidx = (int*)malloc(n * sizeof(int));	// temporary index array for quickselect
+	*min_value = quick_select(min_max_array, tmpidx, n, 0);							// return min value of chunk
+	*max_value = quick_select((min_max_array + 1 * minmaxdim), tmpidx, n, n - 1);	// return max value of chunk
+	free(tmpidx);
+	free(min_max_array);
+}
+
 knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 {
 	knnresult result;
@@ -154,6 +169,7 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 		}
 	}
 
+
 	knnresult final_knnresult;
 	final_knnresult.nidx = (int*)malloc(n * k * sizeof(int));
 	final_knnresult.ndist = (double*)malloc(n * k * sizeof(double));
@@ -163,5 +179,14 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 	}
 	final_knnresult.m = n;
 	final_knnresult.k = k;
+
+	// Global reductions and all-to-all
+	double min_c, min_X, max_c, max_X;
+	get_min_max(final_knnresult.ndist, n, k, &min_c, &max_c);
+	MPI_Allreduce(&min_c, &min_X, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	MPI_Allreduce(&max_c, &max_X, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+	if (id == 0) // MASTER process
+		printf("Minimun and maximun distances are %lf and %lf. ", min_X, max_X);
+
 	return final_knnresult;
 }

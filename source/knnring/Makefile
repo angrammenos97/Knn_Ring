@@ -21,7 +21,7 @@ INCLUDES = -I $(INCDIR)
 SRC = knnring
 
 # define the different possible executables
-MAINTYPES = sequential mpi_s mpi_a
+MAINTYPES = sequential mpi_s mpi_a mpi_r
 LIBTYPES = sequential mpi
 
 # define the executable file  name

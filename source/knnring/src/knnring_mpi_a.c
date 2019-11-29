@@ -113,7 +113,7 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 	int *npidx = (int*)malloc(n * (2 * k) * sizeof(int));
 	double *npdist = (double*)malloc(n * (2 * k) * sizeof(double));
 	double *X = (double*)malloc(n * d * sizeof(double));
-	memcpy(X, Y, n * d * sizeof(double));
+	memcpy(X, Y, n * d * sizeof(double));		// your chunk are the first points to check
 	double *X_recv = (double*)malloc(n * d * sizeof(double));
 
 	// Move points into circle
