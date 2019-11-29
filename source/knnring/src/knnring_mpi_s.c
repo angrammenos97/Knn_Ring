@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "knnring.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,27 +104,19 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 	// Where receive? Where send?
 	int source = (id == 0) ? p - 1 : id - 1;	// if id == 0 take from last proccess
 	int dest = (id == p - 1) ? 0 : id + 1;		// if last proccess send to first proccess
-	int tag = (int)'X';							// mpi tag to send X data points set
-	const int num_of_requests = 2;				// mpi asychronous # of status for request
-	MPI_Status Stat[num_of_requests];			// mpi asychronous receive status	
-	MPI_Request mpi_requests[num_of_requests];	// mpi asychronou request status
+	int tag = (int)'X';					// mpi tag to send X data points set
+	MPI_Status Stat;					// mpi receive status
 
 	// Allocate memory for the jobs
 	int *npidx = (int*)malloc(n * (2 * k) * sizeof(int));
 	double *npdist = (double*)malloc(n * (2 * k) * sizeof(double));
 	double *X = (double*)malloc(n * d * sizeof(double));
-	memcpy(X, Y, n * d * sizeof(double));
 	double *X_recv = (double*)malloc(n * d * sizeof(double));
 
 	// Move points into circle
 	for (int ip = 0; ip < p; ip++) {
-		if (ip < p - 1) {	// don't send data at the last loop, the job was done at the first
-			// Send and receive data asychronous from other proccess in the ring
-			MPI_Isend(X, n*d, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD, &mpi_requests[0]);
-			MPI_Irecv(X_recv, n*d, MPI_DOUBLE, source, tag, MPI_COMM_WORLD, &mpi_requests[1]);
-
-		}
-		if (ip == 0) {	// at first loop you already have data			
+		if (ip == 0) {	// at first loop you already have data
+			memcpy(X, Y, n * d * sizeof(double));
 			knnresult new_knnresult;
 			new_knnresult = kNN(X, Y, n, n, d, k);
 			int offset = (id >= ip + 1) ? (id - ip - 1) * n : (p + id - ip - 1) * n;
@@ -147,8 +137,17 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 				my_qsort((npdist + i * (2 * k)), (npidx + i * (2 * k)), 2 * k, k);
 			}
 		}
-		if (ip < p - 1) {
-			MPI_Waitall(num_of_requests, mpi_requests, Stat);	// wait Isent and Irecv
+
+		if (ip < p - 1) {	// don't send data at the last loop, the job was done at the first
+			// Send and receive data from other proccess in the ring
+			if (id % 2) {	// even id number
+				MPI_Send(X, n*d, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD);
+				MPI_Recv(X_recv, n*d, MPI_DOUBLE, source, tag, MPI_COMM_WORLD, &Stat);
+			}
+			else {			// odd id number
+				MPI_Recv(X_recv, n*d, MPI_DOUBLE, source, tag, MPI_COMM_WORLD, &Stat);
+				MPI_Send(X, n*d, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD);
+			}
 			// Swap pointers
 			double *tmpdptr = X;
 			X = X_recv;

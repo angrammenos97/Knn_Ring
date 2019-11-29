@@ -1,19 +1,3 @@
-# ####################################################################
-#
-#			   C/C++ Makefile
-#
-# Author: Anastasios Grammenos <avgramme@ece.auth.gr>
-#
-# Adapted from
-#  http://www.cs.swarthmore.edu/~newhall/unixhelp/howto_makefiles.html
-#
-# ####################################################################
-#
-# 'make'        build executable file 'main'
-# 'make lib'		build the libraries .a
-# 'make clean'  removes all .o and executable files
-#
-
 # define the shell to bash
 SHELL := /bin/bash
 
@@ -25,7 +9,6 @@ MPICC = mpicc
 SRCDIR = src
 INCDIR = inc
 LIBDIR = lib
-MATDIR = matlab
 
 # define compile-time flags
 CFLAGS = -Wall
@@ -38,43 +21,40 @@ INCLUDES = -I $(INCDIR)
 SRC = knnring
 
 # define the different possible executables
-TYPES = sequential mpi
+MAINTYPES = sequential mpi_s mpi_a
+LIBTYPES = sequential mpi
 
 # define the executable file  name
 MAIN = main
 
-#
-# The following part of the makefile is generic; it can be used to
-# build any executable just by changing the definitions above
-#
-
 # call everytime
 .PRECIOUS: $(LIBDIR)/%.a
 
-all: $(addprefix $(MAIN)_, $(TYPES))
+all: $(addprefix $(MAIN)_, $(MAINTYPES))
 
-lib: $(addprefix $(LIBDIR)/, $(addsuffix .a, $(addprefix $(SRC)_, $(TYPES))))
+lib: $(addprefix $(LIBDIR)/, $(addsuffix .a, $(addprefix $(SRC)_, $(LIBTYPES))))
 
+# build main files
 $(MAIN)_sequential: $(SRCDIR)/$(MAIN).c $(LIBDIR)/$(SRC)_sequential.a
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
-$(MAIN)_mpi: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi.a
-		$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+$(MAIN)_mpi%: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi%.a
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .cpp file) and $@: the name of the target of the rule (a .o file)
-
+# build libraries
 $(LIBDIR)/$(SRC)_%.a: $(SRCDIR)/$(SRC)_%.o
 	mkdir -p $(LIBDIR)
 	ar rcs $@ $<
 
-# (see the gnu make manual section about automatic variables)
 $(SRCDIR)/$(SRC)_sequential.o: $(SRCDIR)/$(SRC)_sequential.c
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
 
 $(SRCDIR)/$(SRC)_mpi.o: $(SRCDIR)/$(SRC)_mpi.c
-		$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
 
+$(SRCDIR)/$(SRC)_mpi%.o: $(SRCDIR)/$(SRC)_mpi%.c
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ -c $< $(LDFLAGS)
+
+# remove builds and clean working folder
 clean:
-	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(MATDIR)/data.m $(addprefix $(MAIN)_, $(TYPES)) *~ data.m
+	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(addprefix $(MAIN)_, $(MAINTYPES)) *~
