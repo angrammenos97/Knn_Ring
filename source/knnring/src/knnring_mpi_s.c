@@ -7,7 +7,7 @@
 #include "mpi.h"
 
 
-double *blas_distXY(double *X, double *Y, int n, int m, int d)
+void blas_distXY(double *D, double *X, double *Y, int n, int m, int d)
 {
 	// Calculate X.X**T
 	double *dot_X = (double*)malloc(n * sizeof(double));
@@ -18,7 +18,6 @@ double *blas_distXY(double *X, double *Y, int n, int m, int d)
 	for (int i = 0; i < m; i++)
 		*(dot_Y + i) = cblas_ddot(d, (Y + i * d), 1, (Y + i * d), 1);
 	// Calculate (X.X**T + Y.Y**T)
-	double *D = (double*)calloc(m*n, sizeof(double));
 	for (int i = 0; i < m; i++)
 		for (int j = 0; j < n; j++)
 			*(D + i * n + j) = *(dot_Y + i) + *(dot_X + j);
@@ -31,7 +30,8 @@ double *blas_distXY(double *X, double *Y, int n, int m, int d)
 			else
 				*(D + i * n + j) = sqrt(*(D + i * n + j));
 		}
-	return D;
+	free(dot_Y);
+	free(dot_X);
 }
 
 void SWAP(double *d, int *idx, int a, int b)
@@ -73,26 +73,23 @@ void add_idx_offset(int offset, int *idx, int n, int k)
 			*(idx + i * k + j) += offset;
 }
 
-knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
+void kNNv(knnresult *result, double *X, double  *Y, int n, int m, int d, int k)
 {
-	knnresult result;
-	result.nidx = (int*)malloc(m * k * sizeof(int));
-	result.ndist = (double*)malloc(m * k * sizeof(double));
-	result.m = m;
-	result.k = k;
-
-	double *distxy = blas_distXY(X, Y, n, m, d);
-	for (int q = 0; q < m; q++) {	// all query
-		int *idx = (int*)malloc(n * sizeof(int));
+	double *distxy = (double*)calloc(m*n, sizeof(double));
+	int *idx = (int*)malloc(n * sizeof(int));
+	blas_distXY(distxy, X, Y, n, m, d); // find all distances
+	// Find k neighbors for every query
+	for (int q = 0; q < m; q++) {	// all query		
 		for (int c = 0; c < n; c++)	// create index array
 			*(idx + c) = c;
 		my_qsort((distxy + q * n), idx, n, k);
 		for (int z = 0; z < k; z++) {	// add to struct the k neighbors
-			*(result.nidx + q * k + z) = *(idx + z);
-			*(result.ndist + q * k + z) = *(distxy + q * n + z);
+			*(result->nidx + q * k + z) = *(idx + z);
+			*(result->ndist + q * k + z) = *(distxy + q * n + z);
 		}
 	}
-	return result;
+	free(idx);
+	free(distxy);
 }
 
 knnresult distrAllkNN(double *Y, int n, int d, int k)
@@ -111,14 +108,18 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 	int *npidx = (int*)malloc(n * (2 * k) * sizeof(int));
 	double *npdist = (double*)malloc(n * (2 * k) * sizeof(double));
 	double *X = (double*)malloc(n * d * sizeof(double));
+	memcpy(X, Y, n * d * sizeof(double));		// your chunk are the first points to check
 	double *X_recv = (double*)malloc(n * d * sizeof(double));
+	knnresult new_knnresult;
+	new_knnresult.m = n;
+	new_knnresult.k = k;
+	new_knnresult.nidx = (int*)malloc(n * k * sizeof(int));
+	new_knnresult.ndist = (double*)malloc(n * k * sizeof(double));
 
 	// Move points into circle
 	for (int ip = 0; ip < p; ip++) {
 		if (ip == 0) {	// at first loop you already have data
-			memcpy(X, Y, n * d * sizeof(double));
-			knnresult new_knnresult;
-			new_knnresult = kNN(X, Y, n, n, d, k);
+			kNNv(&new_knnresult, X, Y, n, n, d, k);
 			int offset = (id >= ip + 1) ? (id - ip - 1) * n : (p + id - ip - 1) * n;
 			add_idx_offset(offset, new_knnresult.nidx, n, k);				// offset idx depending of the chunk
 			for (int i = 0; i < n; i++) {
@@ -127,8 +128,7 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 			}
 		}
 		else {	// work with received data
-			knnresult new_knnresult;
-			new_knnresult = kNN(X, Y, n, n, d, k);
+			kNNv(&new_knnresult, X, Y, n, n, d, k);
 			int offset = (id >= ip + 1) ? (id - ip - 1) * n : (p + id - ip - 1) * n;
 			add_idx_offset(offset, new_knnresult.nidx, n, k);				// offset idx depending of the chunk
 			for (int i = 0; i < n; i++) {
@@ -155,6 +155,9 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 		}
 	}
 
+	free(X_recv);
+	free(X);
+
 	knnresult final_knnresult;
 	final_knnresult.nidx = (int*)malloc(n * k * sizeof(int));
 	final_knnresult.ndist = (double*)malloc(n * k * sizeof(double));
@@ -164,5 +167,9 @@ knnresult distrAllkNN(double *Y, int n, int d, int k)
 	}
 	final_knnresult.m = n;
 	final_knnresult.k = k;
+
+	free(npidx);
+	free(npdist);
+
 	return final_knnresult;
 }

@@ -5,27 +5,31 @@
 #include "cblas.h"
 
 
-double *blas_distXY(double *X, double *Y, int n, int m, int d)
+void blas_distXY(double *D, double *X, double *Y, int n, int m, int d)
 {
-	// Calculate X*X**T
+	// Calculate X.X**T
 	double *dot_X = (double*)malloc(n * sizeof(double));
 	for (int i = 0; i < n; i++)
 		*(dot_X + i) = cblas_ddot(d, (X + i * d), 1, (X + i * d), 1);
-	// Calculate Y*Y**T
+	// Calculate Y.Y**T
 	double *dot_Y = (double*)malloc(m * sizeof(double));
 	for (int i = 0; i < m; i++)
 		*(dot_Y + i) = cblas_ddot(d, (Y + i * d), 1, (Y + i * d), 1);
-	// Calculate (X*X**T + Y*Y**T)
-	double *D = (double*)calloc(m*n, sizeof(double));
+	// Calculate (X.X**T + Y.Y**T)
 	for (int i = 0; i < m; i++)
 		for (int j = 0; j < n; j++)
 			*(D + i * n + j) = *(dot_Y + i) + *(dot_X + j);
-	// Calculate 2*Y*X**T and all distances
+	// Calculate 2.Y.X**T and all distances
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, m, n, d, -2.0, Y, d, X, d, 1.0, D, n);
 	for (int i = 0; i < m; i++)
-		for (int j = 0; j < n; j++)
-			*(D + i * n + j) = sqrt(*(D + i * n + j));
-	return D;
+		for (int j = 0; j < n; j++) {
+			if (*(D + i * n + j) < 1e-12)	// threshold min value for openblas
+				*(D + i * n + j) = 0.0;
+			else
+				*(D + i * n + j) = sqrt(*(D + i * n + j));
+		}
+	free(dot_Y);
+	free(dot_X);
 }
 
 void SWAP(double *d, int *idx, int a, int b)
@@ -68,9 +72,11 @@ knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 	result.m = m;
 	result.k = k;
 
-	double *distxy = blas_distXY(X, Y, n, m, d);
+	double *distxy = (double*)calloc(m*n, sizeof(double));
+	int *idx = (int*)malloc(n * sizeof(int));
+	blas_distXY(distxy, X, Y, n, m, d); // find all distances
+	// Find k neighbors for every query
 	for (int q = 0; q < m; q++) {	// all query
-		int *idx = (int*)malloc(n * sizeof(int));
 		for (int c = 0; c < n; c++)	// create index array
 			*(idx + c) = c;
 		my_qsort((distxy + q * n), idx, n, k);
@@ -79,6 +85,8 @@ knnresult kNN(double *X, double  *Y, int n, int m, int d, int k)
 			*(result.ndist + q * k + z) = *(distxy + q * n + z);
 		}
 	}
+	free(idx);
+	free(distxy);
 	return result;
 }
 

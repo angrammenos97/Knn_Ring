@@ -15,7 +15,7 @@ CFLAGS = -Wall
 LDFLAGS = -lm -lopenblas
 
 # define any directories containing header files
-INCLUDES = -I $(INCDIR)
+INCLUDES = -I $(INCDIR) #-I $(OPENBLAS_ROOT)/include -L $(OPENBLAS_ROOT)/lib	# for HPC
 
 # define the source file for the library
 SRC = knnring
@@ -27,15 +27,12 @@ LIBTYPES = sequential mpi
 # define the executable file  name
 MAIN = main
 
-# call everytime
-.PRECIOUS: $(LIBDIR)/%.a
-
 all: $(addprefix $(MAIN)_, $(MAINTYPES))
 
 lib: $(addprefix $(LIBDIR)/, $(addsuffix .a, $(addprefix $(SRC)_, $(LIBTYPES))))
 
 # build main files
-$(MAIN)_sequential: $(SRCDIR)/$(MAIN).c $(LIBDIR)/$(SRC)_sequential.a
+$(MAIN)_sequential: $(SRCDIR)/$(MAIN)_sequential.c $(LIBDIR)/$(SRC)_sequential.a
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
 $(MAIN)_mpi%: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi%.a
@@ -57,4 +54,4 @@ $(SRCDIR)/$(SRC)_mpi%.o: $(SRCDIR)/$(SRC)_mpi%.c
 
 # remove builds and clean working folder
 clean:
-	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(addprefix $(MAIN)_, $(MAINTYPES)) *~
+	$(RM) $(LIBDIR)/* $(SRCDIR)/*~ $(SRCDIR)/*.o $(INCDIR)/*~ $(addprefix $(MAIN)_, $(MAINTYPES)) *~ slurm*.out error.out
