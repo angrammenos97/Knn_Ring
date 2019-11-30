@@ -19,32 +19,32 @@
 int main()
 {
 
-	int n = 897;                    // corpus
-	int m = 762;                    // query 
-	int d = 7;                      // dimensions
-	int k = 13;                     // # neighbors
+  int n=897;                    // corpus
+  int m=762;                    // query
+  int d=7;                      // dimensions
+  int k=13;                     // # neighbors
 
-	double  * corpus = (double *)malloc(n*d * sizeof(double));
-	double  * query = (double *)malloc(m*d * sizeof(double));
+  double  * corpus = (double * ) malloc( n*d * sizeof(double) );
+  double  * query  = (double * ) malloc( m*d * sizeof(double) );
 
-	for (int i = 0; i < n*d; i++)
-		corpus[i] = ((double)(rand())) / (double)RAND_MAX;
+  for (int i=0;i<n*d;i++)
+    corpus[i] = ( (double) (rand()) ) / (double) RAND_MAX;
 
-	for (int i = 0; i < m*d; i++)
-		query[i] = ((double)(rand())) / (double)RAND_MAX;
+  for (int i=0;i<m*d;i++)
+    query[i]  = ( (double) (rand()) ) / (double) RAND_MAX;
 
-	knnresult knnres = kNN(corpus, query, n, m, d, k);
+  knnresult knnres = kNN( corpus, query, n, m, d, k );
 
-	int isValidC = validateResultColMajor(knnres, corpus, query, n, m, d, k);
+  int isValidC = validateResult( knnres, corpus, query, n, m, d, k, COLMAJOR );
 
-	int isValidR = validateResultRowMajor(knnres, corpus, query, n, m, d, k);
+  int isValidR = validateResult( knnres, corpus, query, n, m, d, k, ROWMAJOR );
 
-	printf("Tester validation: %s NEIGHBORS\n",
-		STR_CORRECT_WRONG[isValidC || isValidR]);
+  printf("Tester validation: %s NEIGHBORS\n",
+         STR_CORRECT_WRONG[isValidC||isValidR]);
 
-	free(corpus);
-	free(query);
+  free( corpus );
+  free( query );
 
-	return 0;
+  return 0;
 
 }
