@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	// Find neighbors
 	printf("Finding all %i neighbors for all %i query points. ", k, m);
 	knnresult knnres;
-	gettimeofday(&startwtime, NULL);	
+	gettimeofday(&startwtime, NULL);
 	if (!self_q)
 		knnres = kNN(corpus, query, n, m, d, k);
 	else
@@ -119,7 +119,7 @@ void help(int argc, char *argv[])
 	printf("-m [Number]\t:Number of query points (default:%i)\n", DefaultNumQueryPoints);
 	printf("-k [Number]\t:Number of neighbors (default:%i)\n", DefaultNumNeighbors);
 	printf("-d [Dimension]\t:Dimension of the space (default: %i)\n", DefaultDim);
-	printf("-o [0|1|2]\t:Matrix order with 0=ColMajor|1=RowMajor|2=Check both (default:%i)\n", ROWMAJOR);
+	printf("-o [0|1|2]\t:Matrix order with 0=ColMajor|1=RowMajor|2=Check both (default:%i)\n", MatrixOrder);
 	printf("-v [0|1]\t:Validate results with elearning tester (default:%i)\n", DefaultValidateResults);
 	printf("-s [0|1]\t:Use as query the corpus (default:%i)\n", DefaultSelf);
 }

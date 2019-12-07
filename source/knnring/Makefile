@@ -15,13 +15,13 @@ CFLAGS = -Wall
 LDFLAGS = -lm -lopenblas
 
 # define any directories containing header files
-INCLUDES = -I $(INCDIR) #-I $(OPENBLAS_ROOT)/include -L $(OPENBLAS_ROOT)/lib	# for HPC
+INCLUDES = -I $(INCDIR) #-I $(NETLIB_LAPACK_ROOT)/include -L $(NETLIB_LAPACK_ROOT)/lib64 # for HPC
 
 # define the source file for the library
 SRC = knnring
 
 # define the different possible executables
-MAINTYPES = sequential mpi_s mpi_a mpi_r
+MAINTYPES = sequential mpi_s mpi_a mpi_r mpi
 LIBTYPES = sequential mpi
 
 # define the executable file  name
@@ -34,6 +34,9 @@ lib: $(addprefix $(LIBDIR)/, $(addsuffix .a, $(addprefix $(SRC)_, $(LIBTYPES))))
 # build main files
 $(MAIN)_sequential: $(SRCDIR)/$(MAIN)_sequential.c $(LIBDIR)/$(SRC)_sequential.a
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+$(MAIN)_mpi: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi.a
+	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
 
 $(MAIN)_mpi%: $(SRCDIR)/$(MAIN)_mpi.c $(LIBDIR)/$(SRC)_mpi%.a
 	$(MPICC) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
